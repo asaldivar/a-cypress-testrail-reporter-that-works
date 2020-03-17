@@ -1,6 +1,7 @@
-const axios = require('axios');
-const chalk = require('chalk');
-import { TestRailOptions, TestRailResult } from './testrail.interface';
+const axios = require("axios");
+const chalk = require("chalk");
+import { TestRailOptions, TestRailResult, TestRun } from "./testrail.interface";
+import moment = require("moment");
 
 export class TestRail {
   private base: String;
@@ -12,57 +13,48 @@ export class TestRail {
 
   public createRun(name: string, description: string) {
     axios({
-      method: 'post',
+      method: "post",
       url: `${this.base}/add_run/${this.options.projectId}`,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
       auth: {
         username: this.options.username,
-        password: this.options.password,
+        password: this.options.password
       },
       data: JSON.stringify({
         suite_id: this.options.suiteId,
         name,
         description,
-        include_all: true,
-      }),
+        include_all: true
+      })
     })
       .then(response => {
+        console.log("Creating test run... ---> run id is:  ", response.data.id);
         this.runId = response.data.id;
       })
-      .catch(error => console.error(error));
-  }
-
-  public deleteRun() {
-    axios({
-      method: 'post',
-      url: `${this.base}/delete_run/${this.runId}`,
-      headers: { 'Content-Type': 'application/json' },
-      auth: {
-        username: this.options.username,
-        password: this.options.password,
-      },
-    }).catch(error => console.error(error));
+      .catch(error => {
+        console.error(error);
+      });
   }
 
   public publishResults(results: TestRailResult[]) {
     axios({
-      method: 'post',
+      method: "post",
       url: `${this.base}/add_results_for_cases/${this.runId}`,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
       auth: {
         username: this.options.username,
-        password: this.options.password,
+        password: this.options.password
       },
-      data: JSON.stringify({ results }),
+      data: JSON.stringify({ results })
     })
-      .then(response => {
-        console.log('\n', chalk.magenta.underline.bold('(TestRail Reporter)'));
+      .then(() => {
+        console.log("\n", chalk.magenta.underline.bold("(TestRail Reporter)"));
         console.log(
-          '\n',
+          "\n",
           ` - Results are published to ${chalk.magenta(
             `https://${this.options.domain}/index.php?/runs/view/${this.runId}`
           )}`,
-          '\n'
+          "\n"
         );
       })
       .catch(error => console.error(error));
